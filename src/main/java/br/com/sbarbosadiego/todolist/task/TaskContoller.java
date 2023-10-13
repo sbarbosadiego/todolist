@@ -53,13 +53,22 @@ public class TaskContoller {
     }
 
     @PutMapping("/{id}")
-    public TaskModel atualizarTarefa(@RequestBody TaskModel taskModel, @PathVariable UUID id, HttpServletRequest request) {
+    public ResponseEntity atualizarTarefa(@RequestBody TaskModel taskModel, @PathVariable UUID id, HttpServletRequest request) {
         var idUser = request.getAttribute("idUser");
         var tarefa = this.taskRepository.findById(id).orElse(null);
         
+        if(tarefa == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Tarefa não encontrada");
+        }
+
+        if(!tarefa.getIdUser().equals(idUser)) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Usuário não autorizado para realizar alteração");
+        }
+
         Utils.copyNonNullProperties(taskModel, tarefa);
 
-        return this.taskRepository.save(tarefa);
+        var tarefaAtualizada = this.taskRepository.save(tarefa);
+        return ResponseEntity.ok().body(tarefaAtualizada);
     }
     
 }
